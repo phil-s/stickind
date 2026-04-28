@@ -1,11 +1,14 @@
-// XkbGetIndicatorState
+// XkbGetIndicatorState  -*- c-basic-offset: 4; c-file-style: "k&r"; -*-
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdbool.h>
 
 void output(unsigned char v) {
     if (v == 0) {
@@ -13,31 +16,31 @@ void output(unsigned char v) {
         return;
     }
     if (v & 128) {
-        printf("G");
+        printf("AltGr-");
     }
     if (v & 64) {
-        printf("W");
+        printf("Super-");
     }
     if (v & 8) {
-        printf("A");
+        printf("Meta-");
     }
     if (v & 4) {
-        printf("C");
+        printf("Ctrl-");
     }
     if (v & 1) {
-        printf("S");
+        printf("Shift-");
     }
 }
 
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-h") == 0) {
-        printf("\tReturns status of latched and locked mods.\n");
-        printf("\t\t'-' - no mods active.\n");
-        printf("\t\t'S' - 'Shift' active.\n");
-        printf("\t\t'C' - 'Control' active.\n");
-        printf("\t\t'A' - 'Alt' active.\n");
-        printf("\t\t'G' - 'AltGr' active.\n");
-        printf("\t\t'W' - 'Windows' active.\n");
+        printf("Returns status of latched (firstly) and locked (secondly) modifiers.\n");
+        printf("\t'-'      - No modifer.\n");
+        printf("\t'Shift-' - 'Shift' active.\n");
+        printf("\t'Ctrl-'  - 'Control' active.\n");
+        printf("\t'Meta-'  - 'Meta' active.\n");
+        printf("\t'AltGr-' - 'AltGr' active.\n");
+        printf("\t'Super-' - 'Super' active.\n");
         printf("\n");
         return (0);
     }
@@ -46,7 +49,7 @@ int main(int argc, char **argv) {
 
     dpy = XOpenDisplay(NULL);
     if (!dpy) {
-        fprintf(stderr, "unable to connect to display\n");
+        fprintf(stderr, "Unable to connect to display.\n");
         return 7;
     }
 
@@ -54,6 +57,7 @@ int main(int argc, char **argv) {
     // unsigned int *mask;
     // int status = XkbGetIndicatorState(dpy, XkbUseCoreKbd, mask);
     XkbStateRec state;
+
     int status = XkbGetState(dpy, XkbUseCoreKbd, &state);
     if (status > 0) {
         printf("!\n");
@@ -61,12 +65,28 @@ int main(int argc, char **argv) {
     }
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
         printf("%d %d\n", state.latched_mods, state.locked_mods);
-    } else {
+        // printf("%d %d %d %d\n",
+        //        state.latched_mods,
+        //        state.locked_mods,
+        //        state.base_mods,
+        //        state.mods
+        //        );
+        // // unsigned int mods;           /* modifier state */
+        // // unsigned int base_mods;      /* base modifier state */
+        // // unsigned int latched_mods;   /* latched modifiers */
+        // // unsigned int locked_mods;    /* locked modifiers */
+    }
+    else {
         output(state.latched_mods);
-        printf(" ");
-        output(state.locked_mods);
+        if (state.locked_mods != 16) {
+            printf(" ++ ");
+            // printf("%d", state.locked_mods);
+            output(state.locked_mods);
+        }
         printf("\n");
     }
+
+    // Cleanup
     XCloseDisplay(dpy);
     return 0;
 }
