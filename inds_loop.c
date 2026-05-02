@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <time.h>                               \
 
 void output(unsigned char v) {
     if (v == 0) {
@@ -79,6 +80,10 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &sa, NULL);
     sigaction(SIGTERM, &sa, NULL);
 
+    // Nanosleep timespec of half a second.
+    struct timespec interval = {0, 500000000};
+    struct timespec resume = {0, 500000000};
+
     // Main loop
     while (!shutdown_flag) {
         int status = XkbGetState(dpy, XkbUseCoreKbd, &state);
@@ -114,7 +119,9 @@ int main(int argc, char **argv) {
             old_latched = state.latched_mods;
             old_locked = state.locked_mods;
         }
-        sleep(1);
+        // Sleep for half a second.
+        struct timespec interval = {0, 500000000};
+        while (nanosleep(&interval, &interval));
     }
 
     // Cleanup
