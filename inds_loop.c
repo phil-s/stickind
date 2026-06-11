@@ -28,6 +28,9 @@ void output(unsigned char v) {
     if (v & 4) {
         printf("Ctrl-");
     }
+    if (v & 2) {
+        printf("CapsLock-");
+    }
     if (v & 1) {
         printf("Shift-");
     }
